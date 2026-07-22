@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PUC-1 Marks Card Generator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #e8e8e8;
+    margin: 0;
+    padding: 20px 0 60px;
+  }
+  .toolbar {
+    max-width: 800px;
+    margin: 0 auto 20px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  }
+  .toolbar h2 { margin: 0 0 12px; font-size: 18px; color: #222; }
+  .toolbar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 3px;
+    font-weight: 600;
+  }
+  .field input[type=text], .field input[type=number] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  .field input[type=file] { font-size: 12px; }
+  .print-btn {
+    margin-top: 14px;
+    padding: 9px 18px;
+    background: #b23b2e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .print-btn:hover { background: #922f24; }
+
+  .card {
+    width: 820px;
+    margin: 0 auto;
+    background: #fdfcf8;
+    border: 3px solid #222;
+    padding: 22px 26px 18px;
+    position: relative;
+  }
+  .header { text-align: center; margin-bottom: 10px; }
+  .society { color: #b8860b; font-weight: bold; font-size: 15px; letter-spacing: .3px; }
+  .collegename { color: #a43127; font-weight: 800; font-size: 30px; margin: 2px 0; }
+  .address { color: #3060a8; font-size: 15px; }
+
+  .row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .box {
+    border: 2px solid #222;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  .sats-box { display: flex; align-items: center; gap: 8px; }
+  .puc-box { text-align: center; }
+  .puc-box .puc1 { color: #b23b2e; font-weight: 800; font-size: 20px; }
+  .puc-box .marks-card { color: #c0392b; font-weight: 700; font-size: 14px; }
+  .code-box { font-weight: 600; }
+
+  .name-photo-wrap { display: flex; gap: 10px; margin-top: 6px; }
+  .name-table { flex: 1; }
+  .name-row { display: flex; border: 2px solid #222; border-top: none; }
+  .name-row:first-child { border-top: 2px solid #222; }
+  .name-label { width: 170px; padding: 8px 10px; font-size: 14px; border-right: 2px solid #222; }
+  .name-value { flex: 1; padding: 8px 10px; text-align: center; font-weight: 600; font-size: 15px; }
+  .photo-box {
+    width: 130px;
+    border: 2px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    font-size: 13px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+
+  .enroll-row { display: flex; border: 2px solid #222; margin-top: 6px; }
+  .enroll-cell { flex: 1; padding: 8px 10px; text-align: center; border-right: 2px solid #222; font-size: 14px; }
+  .enroll-cell:last-child { border-right: none; }
+  .enroll-cell .lbl { font-weight: 700; font-size: 13px; }
+  .enroll-cell .val { margin-top: 3px; }
+
+  table.marks {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  table.marks th, table.marks td {
+    border: 2px solid #222;
+    padding: 7px 8px;
+    text-align: center;
+  }
+  table.marks th { font-size: 14px; }
+  table.marks td.subject-label { text-align: left; font-weight: 600; }
+  table.marks td.section-label { text-align: left; font-weight: 700; background: #f1efe8; }
+  .result-cell { font-weight: 800; font-size: 22px; white-space: nowrap; }
+  .words-input, .score-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  .words-input:focus, .score-input:focus { outline: 1px dashed #999; }
+
+  .summary-row { display: flex; border: 2px solid #222; border-top: none; }
+  .summary-left { flex: 2; padding: 8px 10px; font-size: 14px; }
+  .summary-mid { flex: 1; border-left: 2px solid #222; padding: 8px 10px; font-weight: 700; font-size: 14px; }
+  .summary-right { flex: 1; border-left: 2px solid #222; padding: 8px 10px; font-weight: 800; font-size: 18px; text-align: center; }
+
+  .footer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 24px;
+    margin-top: 34px;
+    font-size: 14px;
+  }
+  .footer-col {
+    display: grid;
+    grid-template-rows: 28px auto;
+    text-align: center;
+  }
+  .footer-col.left { text-align: left; }
+  .footer-top { font-weight: 600; align-self: start; }
+  .footer-label {
+    border-top: 1px solid #333;
+    padding-top: 5px;
+    font-weight: 700;
+    align-self: start;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .toolbar { display: none; }
+    .card { border: 2px solid #222; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h2>Enter details for this marks card</h2>
+  <div class="toolbar-grid">
+    <div class="field">
+      <label>SATS Number</label>
+      <input type="text" id="in_sats" value="" placeholder="e.g. 85406954">
+    </div>
+    <div class="field">
+      <label>Photo</label>
+      <input type="file" id="in_photo" accept="image/*">
+    </div>
+    <div class="field">
+      <label>Candidate's Name</label>
+      <input type="text" id="in_name" value="" placeholder="Candidate's Name">
+    </div>
+    <div class="field">
+      <label>Mother's Name</label>
+      <input type="text" id="in_mother" value="" placeholder="Mother's Name">
+    </div>
+    <div class="field">
+      <label>Father's Name</label>
+      <input type="text" id="in_father" value="" placeholder="Father's Name">
+    </div>
+    <div class="field">
+      <label>Enrollment No</label>
+      <input type="text" id="in_enroll" value="" placeholder="Enrollment No">
+    </div>
+    <div class="field">
+      <label>English - Marks Scored</label>
+      <input type="number" id="in_eng" min="0" max="100" value="" placeholder="0-100">
+    </div>
+    <div class="field">
+      <label>Hindi/Kan/Urdu - Marks Scored</label>
+      <input type="number" id="in_hin" min="0" max="100" value="" placeholder="0-100">
+    </div>
+    <div class="field">
+      <label>Physics - Marks Scored</label>
+      <input type="number" id="in_phy" min="0" max="100" value="" placeholder="0-100">
+    </div>
+    <div class="field">
+      <label>Chemistry - Marks Scored</label>
+      <input type="number" id="in_chem" min="0" max="100" value="" placeholder="0-100">
+    </div>
+    <div class="field">
+      <label>Mathematics - Marks Scored</label>
+      <input type="number" id="in_math" min="0" max="100" value="" placeholder="0-100">
+    </div>
+    <div class="field">
+      <label>Biology - Marks Scored</label>
+      <input type="number" id="in_bio" min="0" max="100" value="" placeholder="0-100">
+    </div>
+  </div>
+  <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<div class="card" id="card">
+  <div class="header">
+    <div class="society">KHAJA MOIN BANU MEMORIAL EDUCATION SOCIETY'S ®</div>
+    <div class="collegename">HOLY FAITH P.U COLLEGE OF SCIENCE</div>
+    <div class="address">SIDDIQUE SHAH TALEEM BIDAR 585401</div>
+    <div class="address" style="font-weight:700; margin-top:4px;">(For the year 2025-26)</div>
+  </div>
+
+  <div class="row-top">
+    <div class="box sats-box">SATS &nbsp; <span id="out_sats">85406954</span></div>
+    <div class="box puc-box"><div class="puc1">PUC -1</div><div class="marks-card">MARKS CARD</div></div>
+    <div class="box code-box">College Code: FF0215</div>
+  </div>
+
+  <div class="name-photo-wrap">
+    <div class="name-table">
+      <div class="name-row"><div class="name-label">Candidate's Name</div><div class="name-value" id="out_name">K VENKATESH</div></div>
+      <div class="name-row"><div class="name-label">Mother's Name</div><div class="name-value" id="out_mother">K DEEPIKA</div></div>
+      <div class="name-row"><div class="name-label">Father's Name</div><div class="name-value" id="out_father">K SHRIKANTH</div></div>
+    </div>
+    <div class="photo-box" id="out_photo">PHOTO</div>
+  </div>
+
+  <div class="enroll-row">
+    <div class="enroll-cell"><div class="lbl">Enrollment No</div><div class="val" id="out_enroll">202400005926</div></div>
+    <div class="enroll-cell"><div class="lbl">MONTH AND YEAR</div><div class="val">Jan/Feb-2026</div></div>
+    <div class="enroll-cell"><div class="lbl">DATE OF RESULT</div><div class="val">30-03-2026</div></div>
+  </div>
+
+  <table class="marks">
+    <tr>
+      <th style="text-align:left;">SUBJECT</th>
+      <th>Max<br>Marks</th>
+      <th>Min<br>Marks</th>
+      <th>Marks<br>Scored</th>
+      <th>Marks Scored<br>In Words</th>
+      <th style="white-space:nowrap; min-width:70px;">Result</th>
+    </tr>
+    <tr>
+      <td class="section-label" colspan="5">Part 1 Language</td>
+      <td rowspan="11" class="result-cell">PASS</td>
+    </tr>
+    <tr>
+      <td class="subject-label">ENGLISH</td><td>100</td><td>35</td>
+      <td><span id="score_eng">94</span></td><td id="words_eng">NINETY FOUR</td>
+    </tr>
+    <tr>
+      <td class="subject-label">HINDI/ KAN/ URDU</td><td>100</td><td>35</td>
+      <td><span id="score_hin">95</span></td><td id="words_hin">NINETY FIVE</td>
+    </tr>
+    <tr>
+      <td class="subject-label" style="font-weight:800;">TOTAL</td><td>200</td><td>70</td>
+      <td style="font-weight:800;" id="total_part1">189</td><td></td>
+    </tr>
+    <tr><td class="section-label" colspan="5">PART II Optional</td></tr>
+    <tr>
+      <td class="subject-label">PHYSICS</td><td>100</td><td>35</td>
+      <td><span id="score_phy">96</span></td><td id="words_phy">NINETY SIX</td>
+    </tr>
+    <tr>
+      <td class="subject-label">CHEMISTRY</td><td>100</td><td>35</td>
+      <td><span id="score_chem">96</span></td><td id="words_chem">NINETY SIX</td>
+    </tr>
+    <tr>
+      <td class="subject-label">MATHEMATICS</td><td>100</td><td>35</td>
+      <td><span id="score_math">95</span></td><td id="words_math">NINETY FIVE</td>
+    </tr>
+    <tr>
+      <td class="subject-label">BIOLOGY</td><td>100</td><td>35</td>
+      <td><span id="score_bio">97</span></td><td id="words_bio">NINETY SEVEN</td>
+    </tr>
+    <tr>
+      <td class="subject-label" style="font-weight:800;">TOTAL</td><td>400</td><td>140</td>
+      <td style="font-weight:800;" id="total_part2">384</td><td></td>
+    </tr>
+    <tr>
+      <td class="subject-label" style="font-weight:800;">GRAND TOTAL</td><td>600</td><td>210</td>
+      <td style="font-weight:800;" id="grand_total">573</td><td></td>
+    </tr>
+  </table>
+
+  <div class="summary-row">
+    <div class="summary-left">Marks in Words: <span id="grand_words" style="font-weight:700;">FIVE HUNDRED SEVENTY THREE ONLY</span></div>
+    <div class="summary-mid">Percentage:</div>
+    <div class="summary-right" id="percentage">95.50%</div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-col left">
+      <div class="footer-top">Date:</div>
+      <div class="footer-label">Signature of the candidate</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-top">&nbsp;</div>
+      <div class="footer-label">Checked by</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-top">&nbsp;</div>
+      <div class="footer-label">PRINCIPAL</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ones = ["","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE","TEN",
+  "ELEVEN","TWELVE","THIRTEEN","FOURTEEN","FIFTEEN","SIXTEEN","SEVENTEEN","EIGHTEEN","NINETEEN"];
+const tens = ["","","TWENTY","THIRTY","FORTY","FIFTY","SIXTY","SEVENTY","EIGHTY","NINETY"];
+
+function numToWords(n) {
+  n = Math.max(0, Math.min(999, Math.round(n)));
+  if (n === 0) return "ZERO";
+  let str = "";
+  if (n >= 100) {
+    str += ones[Math.floor(n / 100)] + " HUNDRED";
+    n = n % 100;
+    if (n > 0) str += " AND ";
+  }
+  if (n >= 20) {
+    str += tens[Math.floor(n / 10)];
+    if (n % 10 > 0) str += " " + ones[n % 10];
+  } else if (n > 0) {
+    str += ones[n];
+  }
+  return str.trim();
+}
+
+function bindText(inputId, outputId, transform) {
+  const inp = document.getElementById(inputId);
+  const out = document.getElementById(outputId);
+  const update = () => { out.textContent = transform ? transform(inp.value) : inp.value; };
+  inp.addEventListener('input', update);
+  update();
+}
+
+bindText('in_sats', 'out_sats');
+bindText('in_name', 'out_name');
+bindText('in_mother', 'out_mother');
+bindText('in_father', 'out_father');
+bindText('in_enroll', 'out_enroll');
+
+document.getElementById('in_photo').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const box = document.getElementById('out_photo');
+    box.innerHTML = '<img src="' + ev.target.result + '" alt="photo">';
+  };
+  reader.readAsDataURL(file);
+});
+
+const subjectIds = ['eng','hin','phy','chem','math','bio'];
+
+function recalc() {
+  const scores = {};
+  let anyFilled = false;
+  subjectIds.forEach(id => {
+    const raw = document.getElementById('in_' + id).value;
+    const isEmpty = raw === '';
+    const v = parseInt(raw) || 0;
+    scores[id] = v;
+    if (!isEmpty) anyFilled = true;
+    document.getElementById('score_' + id).textContent = isEmpty ? '' : v;
+    document.getElementById('words_' + id).textContent = isEmpty ? '' : numToWords(v);
+  });
+
+  const part1 = scores.eng + scores.hin;
+  const part2 = scores.phy + scores.chem + scores.math + scores.bio;
+  const grand = part1 + part2;
+  const pct = (grand / 600 * 100).toFixed(2);
+
+  document.getElementById('total_part1').textContent = anyFilled ? part1 : '';
+  document.getElementById('total_part2').textContent = anyFilled ? part2 : '';
+  document.getElementById('grand_total').textContent = anyFilled ? grand : '';
+  document.getElementById('percentage').textContent = anyFilled ? pct + '%' : '';
+  document.getElementById('grand_words').textContent = anyFilled ? (numToWords(grand) + " ONLY") : '';
+}
+
+subjectIds.forEach(id => {
+  document.getElementById('in_' + id).addEventListener('input', recalc);
+});
+recalc();
+</script>
+
+</body>
+</html>
